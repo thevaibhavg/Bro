@@ -1,64 +1,64 @@
 import streamlit as st
 import requests
 
-# Set page config
-st.set_page_config(page_title="AI Companion", page_icon="🤖")
+# --- SETUP ---
 
-# Title
-st.title("BRO")
-st.caption("An emotionally intelligent chatbot powered by Nous Hermes 2")
+st.set_page_config(page_title="AI Chatbot", page_icon="🤖")
 
 # Hugging Face API setup
-API_URL = "https://api-inference.huggingface.co/models/NousResearch/Nous-Hermes-2-Mistral-7B-DPO"
-headers = {"Authorization": f"Bearer {st.secrets['api']['huggingface_token']}"}
+API_URL = "https://api-inference.huggingface.co/models/gpt2"  # Replace with your model if needed
 
-# Query function
+# Load token safely
+try:
+    huggingface_token = st.secrets["api"]["huggingface_token"]
+    headers = {"Authorization": f"Bearer {huggingface_token}"}
+except KeyError:
+    st.error("🔐 Hugging Face token not found in secrets! Please check `.streamlit/secrets.toml` or Streamlit Cloud settings.")
+    st.stop()
+
+# --- FUNCTIONS ---
+
 def query_huggingface(payload):
     response = requests.post(API_URL, headers=headers, json=payload)
-    return response.json()
 
-# Format chat history
-def build_prompt(history, user_input):
-    prompt = ""
-    for msg in history[-4:]:  # Last 2 rounds
-        prompt += f"User: {msg['user']}\nAI: {msg['ai']}\n"
-    prompt += f"User: {user_input}\nAI:"
-    return prompt
+    # Debug info
+    st.write("📡 Status Code:", response.status_code)
+    st.write("🧾 Raw Response:", response.text)
 
-# Generate response
+    try:
+        response.raise_for_status()  # Catch HTTP errors
+        return response.json()
+    except requests.exceptions.JSONDecodeError:
+        st.error("❌ Failed to parse Hugging Face response as JSON.")
+        return {"error": "Invalid response format"}
+    except requests.exceptions.HTTPError as e:
+        st.error(f"🚨 HTTP error from Hugging Face: {e}")
+        return {"error": str(e)}
+
 def get_response(prompt):
     output = query_huggingface({
         "inputs": prompt,
-        "parameters": {
-            "temperature": 0.7,
-            "max_new_tokens": 150,
-            "return_full_text": False
-        }
     })
+    if "error" in output:
+        return "Sorry, the AI couldn't respond properly."
+    
     try:
         return output[0]["generated_text"]
     except (KeyError, IndexError, TypeError):
-        return "I'm having trouble thinking right now. Try again in a moment."
+        return "The model didn't return expected output."
 
-# Session state to store conversation
-if "history" not in st.session_state:
-    st.session_state.history = []
+# --- UI ---
 
-# User input
-user_input = st.text_input("You:", key="input")
+st.title("🤖 AI Chatbot")
+st.markdown("Ask me anything!")
 
-if user_input:
-    with st.spinner("Thinking..."):
-        prompt = build_prompt(st.session_state.history, user_input)
-        ai_reply = get_response(prompt)
+prompt = st.text_area("Your message", placeholder="Type your question here...", height=150)
 
-    st.session_state.history.append({"user": user_input, "ai": ai_reply})
-
-# Display chat history
-for turn in st.session_state.history:
-    st.markdown(f"**You**: {turn['user']}")
-    st.markdown(f"**AI**: {turn['ai']}")
-
-# Clear history button
-if st.button("🗑️ Clear Chat"):
-    st.session_state.history = []
+if st.button("Send"):
+    if prompt.strip() == "":
+        st.warning("Please enter a prompt.")
+    else:
+        with st.spinner("Thinking..."):
+            ai_reply = get_response(prompt)
+        st.success("AI Response:")
+        st.write(ai_reply)
