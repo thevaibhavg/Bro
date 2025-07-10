@@ -11,7 +11,6 @@ st.markdown("Ask me anything and I'll try to respond like a helpful, intelligent
 
 # Use a working public instruct model (better for chat)
 API_URL = "https://api-inference.huggingface.co/models/tiiuae/falcon-7b-instruct"
-
 # Load token from Streamlit secrets
 try:
     huggingface_token = st.secrets["api"]["huggingface_token"]
