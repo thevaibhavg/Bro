@@ -3,7 +3,7 @@ import requests
 
 # 🚨 Debug line to confirm you're using the right version
 st.warning("✅ THIS IS THE UPDATED VERSION")
-API_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.1"
+API_URL = "https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium"
 st.write("Using Model URL:", API_URL)
 
 # Load secret
