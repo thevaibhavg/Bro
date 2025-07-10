@@ -5,7 +5,7 @@ import requests
 st.set_page_config(page_title="AI Companion", page_icon="🤖")
 
 # Title
-st.title("🤖 AI Companion Chatbot")
+st.title("BRO")
 st.caption("An emotionally intelligent chatbot powered by Nous Hermes 2")
 
 # Hugging Face API setup
